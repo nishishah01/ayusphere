@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import SOSAlert from "./SOSAlert";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { FileText, Clock, Download, MessageSquare, X } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 
 const Dashboard = () => {
+  const { user, isAuthenticated } = useAuth();
   const [showChatbot, setShowChatbot] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState("");
 
@@ -41,6 +43,25 @@ const Dashboard = () => {
     },
   };
   
+
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-8">
+        <div className="ayu-card text-center">
+          <h1 className="text-2xl font-bold mb-4">Welcome to AyuSphere</h1>
+          <p className="text-gray-600 mb-6">Please sign in to access your health dashboard</p>
+          <div className="flex gap-4 justify-center">
+            <Link to="/login">
+              <Button className="ayu-button-primary">Sign In</Button>
+            </Link>
+            <Link to="/register">
+              <Button className="ayu-button-secondary">Sign Up</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 relative">
@@ -98,7 +119,7 @@ const Dashboard = () => {
 
       {/* Original Content Below */}
       <div className="ayu-card">
-        <h1 className="text-2xl font-bold">Welcome to AyuSphere</h1>
+        <h1 className="text-2xl font-bold">Welcome back, {user?.first_name}!</h1>
         <p className="mt-2 text-gray-500">Your personal health management platform</p>
       </div>
 

@@ -1,8 +1,19 @@
 import { NavLink, Link } from "react-router-dom";
 import { Bell, Calendar, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
     <header className="w-full bg-white shadow-sm py-4 px-6">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -13,7 +24,7 @@ const Header = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="hidden md:flex items-center space-x-1">
+        {isAuthenticated && <nav className="hidden md:flex items-center space-x-1">
           <NavLink
             to="/"
             className={({ isActive }) =>
@@ -56,7 +67,7 @@ const Header = () => {
               <span>Join as Doctor</span>
             </Button>
           </Link>
-        </nav>
+        </nav>}
 
         {/* Notification & Profile */}
         <div className="flex items-center gap-3">
@@ -69,12 +80,26 @@ const Header = () => {
             </Button>
           </Link>
 
-          <div className="hidden md:flex items-center gap-2 bg-ayu-gray-light py-1 px-3 rounded-full">
-            <div className="w-8 h-8 rounded-full bg-ayu-purple flex items-center justify-center">
-              <User size={16} className="text-white" />
+          {isAuthenticated ? (
+            <div className="hidden md:flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-ayu-gray-light py-1 px-3 rounded-full">
+                <div className="w-8 h-8 rounded-full bg-ayu-purple flex items-center justify-center">
+                  <User size={16} className="text-white" />
+                </div>
+                <span className="text-sm font-medium">
+                  {user?.first_name} {user?.last_name}
+                </span>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
             </div>
-            <span className="text-sm font-medium">John Doe</span>
-          </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link to="/login"><Button variant="outline" size="sm">Login</Button></Link>
+              <Link to="/register"><Button size="sm" className="ayu-button-primary">Sign Up</Button></Link>
+            </div>
+          )}
         </div>
       </div>
     </header>

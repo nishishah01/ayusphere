@@ -1,9 +1,11 @@
-
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
+import doctorService from "@/services/doctorService";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { 
   Form, 
   FormControl, 
@@ -22,17 +24,13 @@ import { User, Mail, Phone, MapPin } from "lucide-react";
 
 // Define form schema with validation
 const formSchema = z.object({
-  fullName: z.string().min(3, { message: "Name must be at least 3 characters" }),
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  phone: z.string().min(10, { message: "Please enter a valid phone number" }),
   specialization: z.string().min(1, { message: "Please select a specialization" }),
   qualifications: z.string().min(10, { message: "Please provide your qualifications" }),
   experience: z.number().min(0, { message: "Experience must be a positive number" }),
-  address: z.string().min(10, { message: "Please provide your clinic address" }),
+  license_number: z.string().min(5, { message: "Please provide your license number" }),
+  clinic_address: z.string().min(10, { message: "Please provide your clinic address" }),
+  consultation_fee: z.string().min(1, { message: "Please provide consultation fee" }),
   availability: z.array(z.string()).nonempty({ message: "Select at least one day" }),
-  acceptTerms: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the terms and conditions" }),
-  }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -65,37 +63,59 @@ const weekDays = [
 
 const DoctorEnlistment = () => {
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    navigate('/login');
+    return null;
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fullName: "",
-      email: "",
-      phone: "",
       specialization: "",
       qualifications: "",
       experience: 0,
-      address: "",
+      license_number: "",
+      clinic_address: "",
+      consultation_fee: "",
       availability: [],
     },
   });
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Doctor registration data:", data);
+    try {
+      await doctorService.createDoctor({
+        specialization: data.specialization,
+        qualifications: data.qualifications,
+        experience: data.experience,
+        license_number: data.license_number,
+        clinic_address: data.clinic_address,
+        consultation_fee: data.consultation_fee,
+        availability: data.availability,
+      });
       
       toast({
         title: "Registration Successful",
-        description: "Your application has been submitted for review.",
+        description: "Your doctor application has been submitted for review.",
       });
       
       form.reset();
+      navigate('/');
+    } catch (error: any) {
+      toast({
+        title: "Registration Failed",
+        description: error.response?.data?.detail || "Failed to submit application",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -115,60 +135,21 @@ const DoctorEnlistment = () => {
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold border-b pb-2">Personal Information</h2>
                 
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input placeholder="Dr. Jane Smith" className="pl-10" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">
+                    <strong>Name:</strong> {user?.first_name} {user?.last_name}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Email:</strong> {user?.email}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Phone:</strong> {user?.phone || 'Not provided'}
+                  </p>
+                </div>
 
                 <FormField
                   control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input placeholder="doctor@example.com" className="pl-10" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input placeholder="+1 (555) 123-4567" className="pl-10" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="address"
+                  name="clinic_address"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Clinic Address</FormLabel>
@@ -233,6 +214,20 @@ const DoctorEnlistment = () => {
 
                 <FormField
                   control={form.control}
+                  name="license_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Medical License Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your medical license number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="experience"
                   render={({ field }) => (
                     <FormItem>
@@ -244,6 +239,20 @@ const DoctorEnlistment = () => {
                           {...field} 
                           onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="consultation_fee"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Consultation Fee ($)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="100.00" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -302,31 +311,6 @@ const DoctorEnlistment = () => {
                 />
               </div>
             </div>
-
-            {/* Terms and Conditions */}
-            <FormField
-              control={form.control}
-              name="acceptTerms"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      I accept the terms and conditions
-                    </FormLabel>
-                    <FormDescription>
-                      By registering, you agree to our privacy policy and medical practice guidelines.
-                    </FormDescription>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <Button 
               type="submit" 
