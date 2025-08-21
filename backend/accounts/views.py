@@ -10,6 +10,7 @@ from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserPr
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register(request):
+    print("Registration request data:", request.data)  # Debug log
     serializer = UserRegistrationSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
@@ -19,6 +20,7 @@ def register(request):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }, status=status.HTTP_201_CREATED)
+    print("Serializer errors:", serializer.errors)  # Debug log
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

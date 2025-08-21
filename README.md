@@ -1,5 +1,33 @@
 # Welcome to your Lovable project
 
+## Quick Setup
+
+Run the setup script to automatically configure both frontend and backend:
+
+```bash
+python setup.py
+```
+
+Then start the services:
+
+```bash
+# Terminal 1 - Start Backend
+./start-backend.sh
+
+# Terminal 2 - Start Frontend  
+npm run dev
+```
+
+## Access Points
+
+- **Frontend**: http://localhost:8080/
+- **Backend API**: http://localhost:8000/api/
+- **Admin Panel**: http://localhost:8000/admin/
+
+### Admin Credentials
+- Username: `admin`
+- Password: `admin123`
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/dd37bd83-d54f-4065-8b97-45783b341285

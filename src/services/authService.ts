@@ -41,25 +41,35 @@ export interface AuthResponse {
 
 class AuthService {
   async login(data: LoginData): Promise<AuthResponse> {
-    const response = await api.post('/auth/login/', data);
-    const { user, access, refresh } = response.data;
-    
-    localStorage.setItem('access_token', access);
-    localStorage.setItem('refresh_token', refresh);
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    return response.data;
+    try {
+      const response = await api.post('/auth/login/', data);
+      const { user, access, refresh } = response.data;
+      
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('Login error:', error.response?.data || error.message);
+      throw error;
+    }
   }
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await api.post('/auth/register/', data);
-    const { user, access, refresh } = response.data;
-    
-    localStorage.setItem('access_token', access);
-    localStorage.setItem('refresh_token', refresh);
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    return response.data;
+    try {
+      const response = await api.post('/auth/register/', data);
+      const { user, access, refresh } = response.data;
+      
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('Registration error:', error.response?.data || error.message);
+      throw error;
+    }
   }
 
   async logout(): Promise<void> {
